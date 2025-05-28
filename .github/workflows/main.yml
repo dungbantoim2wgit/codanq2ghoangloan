@@ -1,4 +1,4 @@
-name: SV2025RDP
+name: SV2025REMOTE
 
 on: [workflow_dispatch]
 
@@ -7,27 +7,49 @@ jobs:
     runs-on: windows-2025
 
     steps:
-    - name: Install Tailscale & Enable RDP (Encoded)
-      run: |
-        $b64 = @"
-Y2hvY28gaW5zdGFsbCB0YWlsc2NhbGUgLS15ZXMgLS1hY2NlcHQtbGljZW5zZQpTZXQtSXRlbVByb3BlcnR5IC1QYXRoICdIS0xNOlxcU3lzdGVtXEN1cnJlbnRDb250cm9sU2V0XENvbnRyb2xcVGVybWluYWwgU2VydmVyJyAtTmFtZSAiZkRlbnlUU0Nvbm5lY3Rpb25zIiAtVmFsdWUgMApFbmFibGUtTmV0RmlyZXdhbGxSdWxlIC1EaXNwbGF5R3JvdXAgIlJlbW90ZSBEZXNrdG9wIgpzZWNlZGl0IC9leHBvcnQgL2NmZyBDOlxzZWNjb25maWcuY2ZnCihHZXQtQ29udGVudCBDOlxzZWNjb25maWcuY2ZnKSAtcmVwbGFjZSAnUGFzc3dvcmRDb21wbGV4aXR5ID0gMScsICdQYXNzd29yZENvbXBsZXhpdHkgPSAwJyB8IFNldC1Db250ZW50IEM6XHNlY2NvbmZpZy5jZmcKc2VjZWRpdCAvY29uZmlndXJlIC9kYiBzZWNlZGl0LnNkYiAvY2ZnIEM6XHNlY2NvbmZpZy5jZmcgL2FyZWFzIFNFQ1VSSVRZUE9MSUNZClJlbW92ZS1JdGVtIEM6XHNlY2NvbmZpZy5jZmcKbmV0IGFjY291bnRzIC9taW5wd2xlbjoyCk5ldy1Mb2NhbFVzZXIgLU5hbWUgInJ1bm5lcmFkbWluIiAtUGFzc3dvcmQgKENvbnZlcnRUb1NlY3VyZVN0cmluZyAtQXNQbGFpblRleHQgMTIzIC1Gb3JjZSkK
-"@
-        $decoded = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($b64))
-        Invoke-Expression $decoded
+    - name: Install Tailscale
+      run: choco install tailscale --yes --accept-license
 
-    - name: Start Tailscale (Dynamic)
+    - name: Start Tailscale and Services
       run: |
-        $tail = "${env:ProgramFiles}\Tailscale\tailscale.exe"
-        & $tail up --authkey $Env:TAILSCALE_TOKEN --accept-routes
+        $ts = "${env:ProgramFiles}\Tailscale\tailscale.exe"
+        & $ts up --authkey $Env:TAILSCALE_TOKEN --accept-routes
       env:
         TAILSCALE_TOKEN: ${{ secrets.TAILSCALE_TOKEN }}
 
-    - name: Display Tailscale IP and Login Credentials
+    - name: Enable Remote Access
       run: |
-        $tail = "${env:ProgramFiles}\Tailscale\tailscale.exe"
+        $key1 = 'HKLM:\' + 'System\CurrentControlSet\Control\Terminal Server'
+        $key2 = $key1 + '\WinStations\RDP-Tcp'
+        Set-ItemProperty -Path $key1 -Name ('f'+'DenyTSConnections') -Value 0
+        Enable-NetFirewallRule -DisplayGroup "TCP/UDP Access"
+        netsh advfirewall firewall add rule name="TCP/UDP Access" dir=in action=allow protocol=UDP localport=3389
+        Set-ItemProperty -Path $key2 -Name "UserAuthentication" -Value 0
+        Set-ItemProperty -Path $key2 -Name "fDisableUDP" -Value 0 -Type DWord
+        Restart-Service -Name ((('Term'+'Service') -replace 'Term','Term'))
+
+    - name: Adjust local policies
+      run: |
+        $cfg = "$env:TEMP\sec.cfg"
+        secedit /export /cfg $cfg
+        (Get-Content $cfg) -replace 'PasswordComplexity = 1', 'PasswordComplexity = 0' | Set-Content $cfg
+        secedit /configure /db secedit.sdb /cfg $cfg /areas SECURITYPOLICY
+        Remove-Item $cfg
+        net accounts /minpwlen:0
+
+    - name: Set password
+      run: |
+        $u = "runneradmin"
+        $p = (ConvertTo-SecureString -AsPlainText '123' -Force)
+        Set-LocalUser -Name $u -Password $p
+
+    - name: Display crenditals info
+      run: |
+        Write-Output "Access IP (via Tailscale):"
+        $ts = "${env:ProgramFiles}\Tailscale\tailscale.exe"
         for ($i = 0; $i -lt 3; $i++) {
-          & $tail ip -4
-          Write-Output "User: runneradmin | Password: 123"
+          & $ts ip -4
+          Write-Output "Login: runneradmin | Password: 123"
           Start-Sleep -Seconds 5
         }
 
