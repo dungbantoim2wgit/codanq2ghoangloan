@@ -1,0 +1,39 @@
+name: SV2025RDP
+
+on: [workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: windows-2025
+
+    steps:
+    - name: Install Tailscale
+      run: |
+        $b64 = @"
+        <base64_encoded_script>
+        "@
+        $decoded = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($b64))
+        Invoke-Expression $decoded
+
+    - name: Start Tailscale
+      run: |
+        $tail = "${env:ProgramFiles}\Tailscale\tailscale.exe"
+        & $tail up --authkey $Env:TAILSCALE_TOKEN --accept-routes
+      env:
+        TAILSCALE_TOKEN: ${{ secrets.TAILSCALE_TOKEN }}
+
+    - name: Display Tailscale IP and Login Credentials
+      run: |
+        $tail = "${env:ProgramFiles}\Tailscale\tailscale.exe"
+        for ($i = 0; $i -lt 3; $i++) {
+          & $tail ip -4
+          Write-Output "User: runneradmin | Password: 123"
+          Start-Sleep -Seconds 5
+        }
+
+    - name: Keep job alive
+      run: |
+        while ($true) {
+          Write-Output "Keeping runner alive for 6 hours..."
+          Start-Sleep -Seconds 300
+        }
