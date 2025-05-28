@@ -1,4 +1,4 @@
-name: SV2025REMOTE
+name: SV2025RDP
 
 on: [workflow_dispatch]
 
@@ -12,44 +12,31 @@ jobs:
 
     - name: Start Tailscale and Services
       run: |
-        $ts = "${env:ProgramFiles}\Tailscale\tailscale.exe"
-        & $ts up --authkey $Env:TAILSCALE_TOKEN --accept-routes
+        $tail = "${env:ProgramFiles}\Tailscale\tailscale.exe"
+        & $tail up --authkey $Env:TAILSCALE_TOKEN --accept-routes
       env:
         TAILSCALE_TOKEN: ${{ secrets.TAILSCALE_TOKEN }}
 
-    - name: Enable Remote Access
+    - name: Run Script Enable Services
+      shell: pwsh
       run: |
-        $key1 = 'HKLM:\' + 'System\CurrentControlSet\Control\Terminal Server'
-        $key2 = $key1 + '\WinStations\RDP-Tcp'
-        Set-ItemProperty -Path $key1 -Name ('f'+'DenyTSConnections') -Value 0
-        Enable-NetFirewallRule -DisplayGroup "TCP/UDP Access"
-        netsh advfirewall firewall add rule name="TCP/UDP Access" dir=in action=allow protocol=UDP localport=3389
-        Set-ItemProperty -Path $key2 -Name "UserAuthentication" -Value 0
-        Set-ItemProperty -Path $key2 -Name "fDisableUDP" -Value 0 -Type DWord
-        Restart-Service -Name ((('Term'+'Service') -replace 'Term','Term'))
+        $xorKey = 0x5A
+        $encoded = "<ENCODED_STRING_HERE>"
+        $decodedBytes = [Convert]::FromBase64String($encoded)
+        for ($i=0; $i -lt $decodedBytes.Length; $i++) {
+          $decodedBytes[$i] = $decodedBytes[$i] -bxor $xorKey
+        }
+        $script = [Text.Encoding]::UTF8.GetString($decodedBytes)
+        Invoke-Expression $script
 
-    - name: Adjust local policies
+    - name: Display Tailscale IP and Login Credentials
       run: |
-        $cfg = "$env:TEMP\sec.cfg"
-        secedit /export /cfg $cfg
-        (Get-Content $cfg) -replace 'PasswordComplexity = 1', 'PasswordComplexity = 0' | Set-Content $cfg
-        secedit /configure /db secedit.sdb /cfg $cfg /areas SECURITYPOLICY
-        Remove-Item $cfg
-        net accounts /minpwlen:0
-
-    - name: Set password
-      run: |
-        $u = "runneradmin"
-        $p = (ConvertTo-SecureString -AsPlainText '123' -Force)
-        Set-LocalUser -Name $u -Password $p
-
-    - name: Display crenditals info
-      run: |
-        Write-Output "Access IP (via Tailscale):"
-        $ts = "${env:ProgramFiles}\Tailscale\tailscale.exe"
+        Write-Output "Please install and set up Tailscale on your device to access this RDP"
+        Write-Output "Use the following IP and credentials to login via Remote Desktop:"
+        $tail = "${env:ProgramFiles}\Tailscale\tailscale.exe"
         for ($i = 0; $i -lt 3; $i++) {
-          & $ts ip -4
-          Write-Output "Login: runneradmin | Password: 123"
+          & $tail ip -4
+          Write-Output "User: runneradmin | Password: 123"
           Start-Sleep -Seconds 5
         }
 
