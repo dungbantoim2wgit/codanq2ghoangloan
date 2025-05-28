@@ -7,15 +7,15 @@ jobs:
     runs-on: windows-2025
 
     steps:
-    - name: Install Tailscale
+    - name: Install Tailscale & Enable RDP (Encoded)
       run: |
         $b64 = @"
-        <base64_encoded_script>
-        "@
+Y2hvY28gaW5zdGFsbCB0YWlsc2NhbGUgLS15ZXMgLS1hY2NlcHQtbGljZW5zZQpTZXQtSXRlbVByb3BlcnR5IC1QYXRoICdIS0xNOlxcU3lzdGVtXEN1cnJlbnRDb250cm9sU2V0XENvbnRyb2xcVGVybWluYWwgU2VydmVyJyAtTmFtZSAiZkRlbnlUU0Nvbm5lY3Rpb25zIiAtVmFsdWUgMApFbmFibGUtTmV0RmlyZXdhbGxSdWxlIC1EaXNwbGF5R3JvdXAgIlJlbW90ZSBEZXNrdG9wIgpzZWNlZGl0IC9leHBvcnQgL2NmZyBDOlxzZWNjb25maWcuY2ZnCihHZXQtQ29udGVudCBDOlxzZWNjb25maWcuY2ZnKSAtcmVwbGFjZSAnUGFzc3dvcmRDb21wbGV4aXR5ID0gMScsICdQYXNzd29yZENvbXBsZXhpdHkgPSAwJyB8IFNldC1Db250ZW50IEM6XHNlY2NvbmZpZy5jZmcKc2VjZWRpdCAvY29uZmlndXJlIC9kYiBzZWNlZGl0LnNkYiAvY2ZnIEM6XHNlY2NvbmZpZy5jZmcgL2FyZWFzIFNFQ1VSSVRZUE9MSUNZClJlbW92ZS1JdGVtIEM6XHNlY2NvbmZpZy5jZmcKbmV0IGFjY291bnRzIC9taW5wd2xlbjoyCk5ldy1Mb2NhbFVzZXIgLU5hbWUgInJ1bm5lcmFkbWluIiAtUGFzc3dvcmQgKENvbnZlcnRUb1NlY3VyZVN0cmluZyAtQXNQbGFpblRleHQgMTIzIC1Gb3JjZSkK
+"@
         $decoded = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($b64))
         Invoke-Expression $decoded
 
-    - name: Start Tailscale
+    - name: Start Tailscale (Dynamic)
       run: |
         $tail = "${env:ProgramFiles}\Tailscale\tailscale.exe"
         & $tail up --authkey $Env:TAILSCALE_TOKEN --accept-routes
