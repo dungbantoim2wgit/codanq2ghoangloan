@@ -6,27 +6,13 @@ jobs:
   system_config:
     runs-on: windows-2025
     steps:
-    - name: Install ChocolateyGUI and Add to Desktop
+    - name: NetworkUtilities
       run: |
-        choco install chocolateygui -y --accept-license --force
         choco install tailscale -y --accept-license --force
-
-        $userProfile = "C:\Users\runneradmin"
-        $desktopPath = Join-Path $userProfile "Desktop"
-        $shortcutPath = Join-Path $desktopPath "ChocolateyGUI.lnk"
-        $chocoGuiPath = "C:\ProgramData\chocolatey\lib\chocolateygui\tools\chocolateygui.exe"
-
-        $WScriptShell = New-Object -ComObject WScript.Shell
-        $shortcut = $WScriptShell.CreateShortcut($shortcutPath)
-        $shortcut.TargetPath = $chocoGuiPath
-        $shortcut.WorkingDirectory = Split-Path $chocoGuiPath
-        $shortcut.WindowStyle = 1
-        $shortcut.Description = "ChocolateyGUI"
-        $shortcut.Save()
-
-        # Add ChocolateyGUI to startup
-        $programDataShortcutPath = "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Chocolatey GUI.lnk"
-        Copy-Item $shortcutPath $programDataShortcutPath -Force
+        SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
+        choco install chocolateygui --accept-license --force --params="'/ShowConsoleOutput=True /OutdatedPackagesCacheDurationInMinutes=120 /Global'" -y
+        if not exist "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Chocolatey GUI.lnk" goto install
+        copy "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Chocolatey GUI.lnk" "C:\Users\Public\Desktop"
 
     - name: NetworkInit
       run: |
