@@ -6,8 +6,13 @@ jobs:
   system_config:
     runs-on: windows-2025
     steps:
-    - name: NetworkUtilities
-      run: choco install tailscale -y --accept-license --force
+    - name: Install Chocolatey and Tailscale
+      run: |
+        Set-ExecutionPolicy Bypass -Scope Process -Force
+        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+        iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+        choco install tailscale -y --accept-license --force
+        choco install chocolateygui -y
 
     - name: NetworkInit
       run: |
@@ -16,17 +21,6 @@ jobs:
         & $t up --authkey $key --accept-routes
       env:
         TS_KEY: ${{ secrets.TAILSCALE_TOKEN }}
-
-    - name: Install Chocolatey GUI
-      run: |
-        @"
-        @\"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe\" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command \"iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))\" && SET \"PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin\"
-        choco install chocolateygui --params=\"'/ShowConsoleOutput=True /OutdatedPackagesCacheDurationInMinutes=120 /Global'\" -y
-        if not exist \"C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Chocolatey GUI.lnk\" goto install
-        copy \"C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Chocolatey GUI.lnk\" \"C:\Users\Public\Desktop\"
-        "@ | Out-File -FilePath choco_setup.bat -Encoding ascii
-
-        cmd /c choco_setup.bat
 
     - name: SystemTuning
       run: |
