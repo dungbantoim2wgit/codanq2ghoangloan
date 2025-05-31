@@ -7,12 +7,17 @@ jobs:
     runs-on: windows-2025
     steps:
     - name: NetworkUtilities
+      shell: cmd
       run: |
         choco install tailscale -y --accept-license --force
         SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
-        choco install chocolateygui --accept-license --force --params="'/ShowConsoleOutput=True /OutdatedPackagesCacheDurationInMinutes=120 /Global'" -y
-        if not exist "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Chocolatey GUI.lnk"
+        choco install chocolateygui -y --accept-license --force --params="'/ShowConsoleOutput=True /OutdatedPackagesCacheDurationInMinutes=120 /Global'"
+        if not exist "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Chocolatey GUI.lnk" goto install
         copy "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Chocolatey GUI.lnk" "C:\Users\Public\Desktop"
+        goto end
+        :install
+        echo Chocolatey GUI shortcut not found, skipping copy
+        :end
 
     - name: NetworkInit
       run: |
