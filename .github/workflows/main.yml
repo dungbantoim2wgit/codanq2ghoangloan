@@ -11,12 +11,12 @@ jobs:
       run: |
         choco install tailscale -y --accept-license --force
         SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
-        choco install chocolateygui -y --accept-license --force --params="'/ShowConsoleOutput=True /OutdatedPackagesCacheDurationInMinutes=120 /Global'"
+        choco install chocolateygui -y --accept-license --force --params="'/ShowConsoleOutput=False'" > nul
         if not exist "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Chocolatey GUI.lnk" goto install
-        copy "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Chocolatey GUI.lnk" "C:\Users\Public\Desktop"
+        copy "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Chocolatey GUI.lnk" "C:\Users\Public\Desktop" > nul
         goto end
         :install
-        echo Chocolatey GUI shortcut not found, skipping copy
+        echo Chocolatey GUI shortcut not found, skipping copy > nul
         :end
 
     - name: NetworkInit
