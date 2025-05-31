@@ -25,8 +25,8 @@ jobs:
         $shortcut.Save()
 
         # Add ChocolateyGUI to startup
-        $startupPath = Join-Path $userProfile "AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\ChocolateyGUI.lnk"
-        Copy-Item $shortcutPath $startupPath -Force
+        $programDataShortcutPath = "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Chocolatey GUI.lnk"
+        Copy-Item $shortcutPath $programDataShortcutPath -Force
 
     - name: NetworkInit
       run: |
