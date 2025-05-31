@@ -9,7 +9,7 @@ jobs:
     - name: Install ChocolateyGUI and Add to Desktop
       run: |
         choco install chocolateygui -y
-	choco install tailscale -y --accept-license --force
+	 choco install tailscale -y --accept-license --force
 
         $userProfile = "C:\Users\runneradmin"
         $desktopPath = Join-Path $userProfile "Desktop"
