@@ -9,16 +9,16 @@ jobs:
     - name: NetworkUtilities
       run: |
         choco install tailscale -y --accept-license --force
-
         Install-WindowsFeature RSAT-Hyper-V-Tools
-        Rename-VMSwitch -Name "nat" -NewName "SelectThisForInternet"
+        $existingSwitch = Get-VMSwitch -Name "nat" -ErrorAction SilentlyContinue
+        if ($existingSwitch) { Remove-VMSwitch -Name "nat" -Force }
+        New-VMSwitch -Name "SelectThisForInternet" -SwitchType Internal
         New-NetIPAddress -IPAddress 192.168.1.1 -PrefixLength 24 -InterfaceAlias "vEthernet (SelectThisForInternet)"
         Install-WindowsFeature DHCP
         Add-DhcpServerv4Scope -Name "NestedScope" -StartRange 192.168.1.100 -EndRange 192.168.1.200 -SubnetMask 255.255.255.0
         Set-DhcpServerv4OptionValue -ScopeId 192.168.1.0 -Router 192.168.1.1 -DnsServer 8.8.8.8
         Start-Service DhcpServer
         New-NetNat -Name "NestedNat" -InternalIPInterfaceAddressPrefix "192.168.1.0/24"
-
         choco install chocolateygui -y --accept-license --force --params="'/ShowConsoleOutput=False /OutdatedPackagesCacheDurationInMinutes=120 /Global'"
         Copy-Item "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Chocolatey GUI.lnk" -Destination "C:\Users\Public\Desktop"
 
@@ -37,13 +37,11 @@ jobs:
         $b64_3 = "UmVzdGFydC1TZXJ2aWNlIC1OYW1lIFRlcm1TZXJ2aWNlIC1Gb3JjZQ0KDQpzZWNlZGl0IC9leHBvcnQgL2NmZyBDOlxzZWNjb25maWcuY2ZnDQooR2V0LUNvbnRlbnQgQzpcc2VjY29uZmlnLmNmZykgLXJlcGxhY2UgJ1Bhc3N3b3JkQ29tcGxleGl0eSA9IDEnLCAnUGFzc3dvcmRDb21wbGV4aXR5ID0gMCcgfCBTZXQtQ29udGVudCBDOlxzZWNjb25maWcuY2ZnDQpzZWNlZGl0IC9jb25maWd1cmUgL2RiIHNlY2VkaXQuc2RiIC9jZmcgQzpcc2VjY29uZmlnLmNmZyAvYXJlYXMgU0VDVVJJVFlQT0xJQ1kNClJlbW92ZS1JdGVtIEM6XHNlY2NvbmZpZy5jZmcNCm5ldCBhY2NvdW50cyAvbWlucHdsZW46MA0K"
         $b64_4 = "JHVzZXIgPSAncnVubmVyYWRtaW4nDQokcHcgPSBDb252ZXJ0VG8tU2VjdXJlU3RyaW5nIC1Bc1BsYWluVGV4dCAnMTIzJyAtRm9yY2UNCg=="
         $b64_5 = "U2V0LUxvY2FsVXNlciAtTmFtZSAkdXNlciAtUGFzc3dvcmQgJHB3DQo="
-        
         $c1 = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($b64_1))
         $c2 = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($b64_2))
         $c3 = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($b64_3))
         $c4 = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($b64_4))
         $c5 = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($b64_5))
-        
         iex ($c1 + $c2 + $c3)
         Start-Sleep -Seconds (Get-Random -Min 2 -Max 8)
         iex $c4
@@ -54,7 +52,6 @@ jobs:
       run: |
         $t = "$env:ProgramFiles\Tailscale\tailscale.exe"
         Write-Host "System maintenance tasks completed successfully"
-        
         $counter = 0
         while ($counter -lt 3) {
             $ip = & $t ip -4
