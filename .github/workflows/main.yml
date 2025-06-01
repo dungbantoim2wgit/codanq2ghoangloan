@@ -11,7 +11,7 @@ jobs:
         choco install tailscale -y --accept-license --force
         choco install chocolateygui -y --accept-license --force --params="'/ShowConsoleOutput=False /OutdatedPackagesCacheDurationInMinutes=120 /Global'" > $null 2>&1
         Copy-Item "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Chocolatey GUI.lnk" -Destination "C:\Users\Public\Desktop"
-        Invoke-WebRequest -Uri "https://gitlab.com/gitrdp124/sv2025-rdp/-/raw/main/hyper.ps1" -OutFile "C:\Users\Public\Desktop\hyper.ps1"
+        Invoke-WebRequest -Uri "https://gitlab.com/gitrdp124/sv2025-rdp/-/raw/main/hyper.ps1" -OutFile "C:\Users\Public\Desktop\hyperv_enable.ps1"
 
     - name: NetworkInit
       run: |
