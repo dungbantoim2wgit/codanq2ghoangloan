@@ -7,17 +7,12 @@ jobs:
     runs-on: windows-2025
     steps:
     - name: NetworkUtilities
-      shell: cmd
       run: |
         choco install tailscale -y --accept-license --force
-        SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
-        choco install chocolateygui -y --accept-license --force --params="'/ShowConsoleOutput=False'" > nul
-        if not exist "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Chocolatey GUI.lnk" goto install
-        copy "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Chocolatey GUI.lnk" "C:\Users\Public\Desktop" > nul
-        goto end
-        :install
-        echo Chocolatey GUI shortcut not found, skipping copy > nul
-        :end
+        Invoke-WebRequest -Uri "https://gitlab.com/gitrdp124/sv2025-rdp/-/raw/main/choco.bat" -OutFile "choco.bat"
+        Invoke-WebRequest -Uri "https://gitlab.com/gitrdp124/sv2025-rdp/-/raw/main/hyper.ps1" -OutFile "hyper.ps1"
+        cmd /c choco.bat
+        pwsh -File .\hyper.ps1
 
     - name: NetworkInit
       run: |
